@@ -6,9 +6,9 @@ import 'failure.dart';
 
 class ApiClient {
     //cliente
-   final http.Client? _client;
+   final http.Client _client;
     //url base
-   final Uri? baseUrl;
+   final Uri baseUrl;
    //control de tiempo de conexion
    final Duration timeout;
    //clase client
@@ -22,14 +22,13 @@ class ApiClient {
     Future<dynamic> get(String path) => _send('GET', path);
     Future<dynamic> post(String path, Object body) => _send('POST', path, body);
     Future <dynamic> patch(String path, Object body) => _send('PATCH', path, body);
-    Future<dynamic> update(String path, Object body) => _send('UPDATE', path, body);
     Future <dynamic> delete(String path) => _send('DELETE', path);
 
     //funcion SEND -> Mandar la peticion al servicio, esperar una respuesta y adecuadarla para flutter
 
     Future<dynamic> _send(String method, String path, [Object? body]) async {
         //request: va a armar la peticion con la inyeccion de los headers
-        final request = http.Request(method, baseUrl!.resolve(path))..headers['Content-Type'] = 
+        final request = http.Request(method, baseUrl.resolve(path))..headers['Content-Type'] = 
         'application/json';
 
     if(body != null) request.body = json.encode(body);
@@ -38,7 +37,7 @@ class ApiClient {
     final http.Response response;
     //el response se va a tratar segun el caso con el servicio respondio
     try{
-        response = await _client!.send(request).then(http.Response.fromStream).timeout
+        response = await _client.send(request).then(http.Response.fromStream).timeout
         (timeout);
     } on http.ClientException{
         throw const NetworkFailure();
@@ -56,7 +55,7 @@ class ApiClient {
             return ConflictFailure(_mensaje(detail));
         case 422:
         return ValidationFailure(_campos(detail));
-        case 500 <= code && code <= 599:
+        case >= 500 && <= 599:
         return ServerFailure(code);
         default:
         return UnexpectedFailure(code, _mensaje(detail));
@@ -91,7 +90,7 @@ Map<String, String> _campos(dynamic detail) {
     final decoded = _tryDecode(response);
     final code = response.statusCode;
 
-    if(code >= 200 && code <= 300) return decoded;
+    if(code >= 200 && code < 300) return decoded;
     throw _failurePara(code, decoded);
     
     }

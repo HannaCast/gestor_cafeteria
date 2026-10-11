@@ -46,13 +46,39 @@ class ApiClient {
         throw const NetworkFailure();
     }
 
+
+    Failure _failurePara(int code, dynamic decoded) {
+    final detail = _detalle(decoded);
+    switch (code) {
+        case 404:
+            return NotFoundFailure(_mensaje(detail));
+        case 409:
+            return ConflictFailure(_mensaje(detail));
+        default:
+            return const NetworkFailure();
+    }
+}
+
+dynamic _detalle(dynamic decoded) {
+    if (decoded is Map && decoded['detail'] != null) return decoded['detail'];
+    return null;
+}
+
+String _mensaje(dynamic detail) {
+    if (detail is String && detail.isNotEmpty) return detail;
+    return 'Error inesperado';
+}
+
     final decoded = _tryDecode(response);
     final code = response.statusCode;
 
     if(code >= 200 && code <= 300) return decoded;
-    throw const NetworkFailure();
+    throw _failurePara(code, decoded);
     
     }
+
+
+    
 dynamic _tryDecode(http.Response response){
     if(response.bodyBytes.isEmpty) return null;
 
